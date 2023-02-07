@@ -2,26 +2,37 @@ from bs4 import BeautifulSoup
 import requests
 import os
 
-with open("links.txt", "r") as f:
-    for link in [x.strip() for x in f.readlines()]:
-        r = requests.get(link)
-        if r.status_code != 200:
-            print("Failed webpage request: ", link)
-        html = r.text
-        soup = BeautifulSoup(html, 'lxml')
-
-
-
-def write_image(path, image) -> None:
-    return 
-
+def write_image(imagesrc) -> None:
+    r = requests.get("https://brickshelf.com" + imagesrc, stream=True)
+    if r.status_code != 200:
+        print("Error requesting image: ", imagesrc)
+        exit(-2)
+    
+    cwd = os.getcwd()
+    path = os.path.join(cwd, *imagesrc.split('/')[:-1])
+    #print("dir path:", path)
+    if not os.path.exists(path):
+        os.makedirs(path)
+    fpath = os.path.join(cwd, *imagesrc.split('/'))
+    #print("file path to write: ", fpath)
+    with open(fpath, 'wb') as f:
+        for chunk in r:
+            f.write(chunk)
+    print("file ", fpath, " written successfully")
+    return
 def find_relev_images(soup) -> list[str]:
-    imgs = soup.find_all('img')
+    ret_imgs = []
+    imgs = soup.find_all('a')
+    #print("imgsoup: ", imgs)
     for img in imgs:
-        if "/cgi-bin/gallery.cgi?i=" in img['src']:
-            imgsoup = soupify_link("https://brickshelf.com" + img['src'])
-            
-    return []
+        if "/cgi-bin/gallery.cgi?i=" in img['href']:
+            #print("found img page: ", img['href'])
+            imgsoup = soupify_link("https://brickshelf.com" + img['href'])
+            imgsrc = imgsoup.find_all('img')[1]["src"]
+            #print("got image src: ", imgsrc)
+            ret_imgs.append(imgsrc)
+    #print("ret_imgs: ", ret_imgs)
+    return ret_imgs
 
 
 def soupify_link(link):
@@ -41,24 +52,30 @@ def get_folders(soup: BeautifulSoup):
     return folders
 
 def main():
-    cwd = os.getcwd()
     s = []
     discovered = {}
      
     with open("links.txt", "r") as f:
         for link in [x.strip() for x in f.readlines()]:
             s.append(link)
-
+    print("scraping these links: ", s)
     while s:
         link = s.pop()
         if link not in discovered:
+            print("new link being scraped: ", link)
             discovered[link] = 1
             soup = soupify_link(link)
+            #print("calling find_relev_images...")
             images = find_relev_images(soup)
+            #print("image src urls: ", images)
             for image in images:
-                write_image("images", image)
+                #print("attempt writing image: ", image)
+                write_image(image)
 
             folders = get_folders(soup)
             for folder in folders:
                 s.append(folder)
-            
+
+if __name__ == "__main__":
+    main()
+
