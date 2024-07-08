@@ -16,9 +16,10 @@ def write_image(imagesrc) -> None:
     if not os.path.exists(path):
         os.makedirs(path)
     fpath = os.path.join(cwd, *imagesrc.split('/'))
-    # print("file path to write: ", fpath)
+    print("file to write: ", fpath)
     with open(fpath, 'wb') as f:
-        for chunk in r:
+        for i, chunk in enumerate(r):
+            print(i, " chunks written       \r", end='', flush=True)
             f.write(chunk)
     print("file ", fpath, " written successfully")
     return
@@ -32,6 +33,7 @@ def write_desc(desc, img) -> None:
     path = os.path.join(path, "bs_folder_description.txt")
     with open(path, 'w') as f:
         f.write(desc)
+    print("file ", path, " written successfully")
     return
 
 
