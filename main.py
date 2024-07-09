@@ -45,7 +45,7 @@ def find_relev_images(soup) -> list[str]:
     ret_imgs = []
     imgs = soup.find_all('a')
     # print("imgsoup: ", imgs)
-    p = re.compile("/gallery/.+\..+")
+    p = re.compile(r"/gallery/.+\..+")
 
     for img in imgs:
         m = p.match(img["href"])
