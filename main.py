@@ -5,11 +5,6 @@ import re
 
 
 def write_image(imagesrc) -> None:
-    r = requests.get("https://brickshelf.com" + imagesrc, stream=True)
-    if r.status_code != 200:
-        print("Error requesting image: ", imagesrc)
-        exit(-2)
-
     cwd = os.getcwd()
     path = os.path.join(cwd, *imagesrc.split('/')[:-1])
     # print("dir path:", path)
@@ -17,9 +12,18 @@ def write_image(imagesrc) -> None:
         os.makedirs(path)
     fpath = os.path.join(cwd, *imagesrc.split('/'))
     print("file to write: ", fpath)
+
+    r = requests.get("https://brickshelf.com" + imagesrc, stream=True)
+    if r.status_code != 200:
+        print("Error requesting image: ", imagesrc)
+        exit(-2)
+
+    length = int(r.headers['Content-length'])
+
     with open(fpath, 'wb') as f:
-        for i, chunk in enumerate(r):
-            print(i, " chunks written       \r", end='', flush=True)
+        for i, chunk in enumerate(r.iter_content(1024 * 1024)):
+            print("%2.2f  percent written       \r" %
+                  (i*1024*1024/length*100), end='', flush=True)
             f.write(chunk)
     print("file ", fpath, " written successfully")
     return
