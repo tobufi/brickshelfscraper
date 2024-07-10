@@ -2,6 +2,7 @@ from bs4 import BeautifulSoup
 import requests
 import os
 import re
+import time
 
 
 def write_image(imagesrc) -> None:
@@ -12,12 +13,25 @@ def write_image(imagesrc) -> None:
         os.makedirs(path)
     fpath = os.path.join(cwd, *imagesrc.split('/'))
     print("file to write: ", fpath)
-
-    r = requests.get("https://brickshelf.com" +
-                     imagesrc, stream=True, timeout=5)
-    if r.status_code != 200:
-        print("Error requesting image: ", imagesrc)
-        exit(-2)
+    sleeper = 1
+    while True:
+        try:
+            r = requests.get("https://brickshelf.com" +
+                             imagesrc, stream=True, timeout=5)
+            if r.status_code != 200:
+                print("Error requesting image: ", imagesrc)
+                print("Retrying in ", sleeper, "s")
+            else:
+                break
+        except requests.exceptions.Timeout:
+            print("Request timed out. Retrying in ", sleeper, "s")
+        except requests.exceptions.HTTPError as errh:
+            print("HTTP Error")
+            print(errh.args[0])
+        except requests.exceptions.ConnectionError as conerr:
+            print("Connection error: ", conerr)
+        time.sleep(sleeper)
+        sleeper += 1
 
     length = int(r.headers['Content-length'])
 
