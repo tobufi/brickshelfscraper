@@ -16,6 +16,7 @@ def write_image(imagesrc) -> None:
     sleeper = 1
     while True:
         try:
+            print("Requesting URL: https://brickshelf.com", imagesrc)
             r = requests.get("https://brickshelf.com" +
                              imagesrc, stream=True, timeout=5)
             if r.status_code != 200:
@@ -77,10 +78,23 @@ def find_relev_images(soup) -> list[str]:
 
 
 def soupify_link(link):
-    r = requests.get(link, timeout=5)
-    if r.status_code != 200:
-        print("Error requesting link: ", link)
-        exit(-1)
+    sleeper = 1
+    while True:
+        try:
+            r = requests.get(link, timeout=5)
+            if r.status_code != 200:
+                print("Error requesting link: ", link)
+            else:
+                break
+        except requests.exceptions.Timeout:
+            print("Request timed out. Retrying in ", sleeper, "s")
+        except requests.exceptions.HTTPError as errh:
+            print("HTTP Error")
+            print(errh.args[0])
+        except requests.exceptions.ConnectionError as conerr:
+            print("Connection error: ", conerr)
+        time.sleep(sleeper)
+        sleeper += 1
 
     return BeautifulSoup(r.text, "html.parser")
 
