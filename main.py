@@ -13,26 +13,25 @@ def write_image(imagesrc) -> None:
         os.makedirs(path)
     fpath = os.path.join(cwd, *imagesrc.split('/'))
     print("file to write: ", fpath)
-    sleeper = 1
+    timeout_delay = 5
     while True:
         try:
             print("Requesting URL: https://brickshelf.com", imagesrc)
             r = requests.get("https://brickshelf.com" +
-                             imagesrc, stream=True, timeout=5)
-            if r.status_code != 200:
-                print("Error requesting image: ", imagesrc)
-                print("Retrying in ", sleeper, "s")
-            else:
+                             imagesrc, stream=True, timeout=timeout_delay)
+            r.raise_for_status()
+            if r.status_code == 200:
                 break
         except requests.exceptions.Timeout:
-            print("Request timed out. Retrying in ", sleeper, "s")
+            print("Request timed out. Retrying...")
         except requests.exceptions.HTTPError as errh:
             print("HTTP Error")
             print(errh.args[0])
         except requests.exceptions.ConnectionError as conerr:
             print("Connection error: ", conerr)
-        time.sleep(sleeper)
-        sleeper += 1
+        except requests.exceptions.RequestException as err:
+            print("General Error???", err, "Retrying...")
+        timeout_delay += 5
 
     length = int(r.headers['Content-length'])
 
