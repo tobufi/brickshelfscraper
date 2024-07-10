@@ -13,7 +13,8 @@ def write_image(imagesrc) -> None:
     fpath = os.path.join(cwd, *imagesrc.split('/'))
     print("file to write: ", fpath)
 
-    r = requests.get("https://brickshelf.com" + imagesrc, stream=True)
+    r = requests.get("https://brickshelf.com" +
+                     imagesrc, stream=True, timeout=5)
     if r.status_code != 200:
         print("Error requesting image: ", imagesrc)
         exit(-2)
@@ -62,7 +63,7 @@ def find_relev_images(soup) -> list[str]:
 
 
 def soupify_link(link):
-    r = requests.get(link)
+    r = requests.get(link, timeout=5)
     if r.status_code != 200:
         print("Error requesting link: ", link)
         exit(-1)
