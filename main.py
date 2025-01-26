@@ -50,6 +50,7 @@ def write_image(imagesrc) -> None:
     print("file to write: ", fpath)
     
     timeout_delay = 5
+    flag = 0
     while True:
         try:
             print("Requesting URL: https://brickshelf.com", imagesrc)
@@ -63,6 +64,10 @@ def write_image(imagesrc) -> None:
         except requests.exceptions.HTTPError as errh:
             print("HTTP Error")
             print(errh.args[0])
+            flag = flag + 1
+            if flag > 5: 
+                print("Can not find file. Skipping...")
+                return # endless loop if 404 (https://brickshelf.com/gallery/LordOblivion/MOCs/WIPs/1077701_488055867955509_1580566608_o.jpeg)
         except requests.exceptions.ConnectionError as conerr:
             print("Connection error: ", conerr)
         except requests.exceptions.RequestException as err:
@@ -146,7 +151,7 @@ def find_relev_images(soup) -> list[str]:
     p = re.compile(r"/gallery/.+\..+")
     
     soupText = soup.get_text()
-    gallerydate = get_data(soupText, "created").timestamp()
+    gallerydate = get_data(soupText, "created") #.timestamp()
     #print(str(gallerydate))
 
     for img in imgs:
@@ -164,7 +169,7 @@ def find_relev_images(soup) -> list[str]:
             } 
             ret_imgs.append(imgsrc)
         elif m is not None:
-            imgset[src_name(img['href'])] = {"date":gallerydate, "views":None, "link":"https://brickshelf.com" + img['href']}
+            imgset[src_name(img['href'])] = {"date":gallerydate.timestamp(), "views":None, "link":"https://brickshelf.com" + img['href']}
             ret_imgs.append(img['href'])
     return ret_imgs
 
@@ -232,7 +237,8 @@ def main():
             for folder in folders:
                 skip = False
                 for link in soup.find_all('a'):
-                    if "Up" in link: 
+                    hay = folder[22:]
+                    if "Up" in link and hay in str(link):
                         skip = True 
                         
                 if skip == False or DontCheckFoldersAboveGallery == False:
